@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+.env
+
+# Virtual environment
+venv/
+backend/venv/
+
+# Database / vector store
+chroma_db/
+backend/chroma_db/
+
+# Uploads
+uploads/
+backend/uploads/
+
+# Node
+node_modules/
+
+# OS files
+.DS_Store
