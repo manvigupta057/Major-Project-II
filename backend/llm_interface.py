@@ -6,7 +6,7 @@ load_dotenv()
 
 # Initialize Groq client
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-MODEL = "llama3-8b-8192"  # Fast and reliable Groq model
+MODEL = "llama-3.1-8b-instant"  # Fast and reliable Groq model
 
 
 def generate_answer(query: str, context_chunks: list[str]) -> str:
