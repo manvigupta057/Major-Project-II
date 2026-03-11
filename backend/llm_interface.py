@@ -1,49 +1,58 @@
-from langchain_ollama import OllamaLLM
-from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate
-from config import Config
 import os
+from groq import Groq
+from dotenv import load_dotenv
 
-class LLMInterface:
-    def __init__(self, model_name: str = None, provider: str = "ollama"):
-        if model_name:
-            self.model_name = model_name
-        elif hasattr(Config, 'LLM_MODEL'):
-            self.model_name = Config.LLM_MODEL
-        else:
-            self.model_name = "llama3"
-        
-        temperature = 0.0
-        if hasattr(Config, 'LLM_TEMPERATURE'):
-            temperature = Config.LLM_TEMPERATURE
-        
-        if provider == "groq":
-            from dotenv import load_dotenv
-            load_dotenv()
-            
-            api_key = os.environ.get("GROQ_API_KEY")
-            if not api_key:
-                print("WARNING: GROQ_API_KEY not found in environment variables. Groq provider will fail if used.")
-            
-            self.llm = ChatGroq(model=self.model_name, temperature=temperature, groq_api_key=api_key)
-        else:
-            self.llm = OllamaLLM(model=self.model_name, temperature=temperature)
-        
-        template = """Answer the question based only on the following context:
-        {context}
-        
-        Question: {question}
-        """
-        if hasattr(Config, 'PROMPT_TEMPLATE'):
-            template = Config.PROMPT_TEMPLATE
+load_dotenv()
 
-        self.prompt = ChatPromptTemplate.from_template(template)
+# Initialize Groq client
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+MODEL = "llama3-8b-8192"  # Fast and reliable Groq model
 
-    def generate_answer(self, query: str, context: str) -> str:
-        chain = self.prompt | self.llm
-        response = chain.invoke({"context": context, "question": query})
-        
-        if hasattr(response, 'content'):
-            return response.content
-        
-        return response
+
+def generate_answer(query: str, context_chunks: list[str]) -> str:
+    """
+    Takes user question + retrieved dataset chunks,
+    sends to Groq LLM, returns a grounded answer.
+    """
+    context = "\n\n".join(context_chunks)
+
+    prompt = f"""You are a helpful healthcare assistant.
+Answer the user's question ONLY using the context provided below.
+If the answer is not in the context, say "I don't have enough data to answer this."
+
+Context:
+{context}
+
+Question: {query}
+Answer:"""
+
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.2
+    )
+
+    return response.choices[0].message.content
+
+
+def generate_suggestions(partial_query: str) -> list[str]:
+    """
+    Takes partially typed text (min 3 words),
+    returns 5 relevant healthcare keyword suggestions.
+    """
+    prompt = f"""The user is typing a healthcare-related query and has typed: "{partial_query}"
+    
+Suggest exactly 5 short, relevant healthcare keyword phrases to complete or extend this query.
+Return only the 5 suggestions as a numbered list, nothing else."""
+
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.5
+    )
+
+    raw = response.choices[0].message.content
+    # Parse numbered list into clean array
+    lines = [line.strip() for line in raw.strip().split("\n") if line.strip()]
+    suggestions = [line.split(". ", 1)[-1] for line in lines if line]
+    return suggestions[:5]
