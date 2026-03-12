@@ -2,23 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: light;
-}
-
 body {
-  margin: 0;
-  width: 100%;
-  min-height: 100vh;
-  background-color: #F5F5F0;
-  color: #1c1917;
-  display: block;
-  /* Ensure it's not flex */
-}
-
-#root {
-  width: 100%;
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
+  @apply bg-[#0a0a0a] text-white antialiased;
 }
