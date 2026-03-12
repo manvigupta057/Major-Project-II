@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 import chromadb
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
