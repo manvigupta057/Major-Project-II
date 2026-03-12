@@ -1,5 +1,6 @@
 import os
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from authlib.integrations.starlette_client import OAuth
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
@@ -9,8 +10,9 @@ load_dotenv()
 
 router = APIRouter()
 oauth = OAuth()
+security = HTTPBearer()
 
-# Google Configuration
+# Google Setup
 oauth.register(
     name='google',
     client_id=os.getenv("GOOGLE_CLIENT_ID"),
@@ -43,7 +45,8 @@ async def auth_callback(request: Request):
         return {"access_token": access_token, "token_type": "bearer", "user": user}
     raise HTTPException(status_code=400, detail="Login failed")
 
-def get_current_user(token: str):
+async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(security)):
+    token = auth.credentials
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
@@ -51,4 +54,4 @@ def get_current_user(token: str):
             raise HTTPException(status_code=401, detail="Invalid token")
         return email
     except JWTError:
-        raise HTTPException(status_code=401, detail="Could not validate credentials")
+        raise HTTPException(status_code=401, detail="Invalid or Expired Credentials")
