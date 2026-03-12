@@ -43,3 +43,7 @@ def suggestions_endpoint(request: SuggestionRequest):
         return {"suggestions": [], "message": "Type at least 3 words"}
     suggestions = generate_suggestions(request.text)
     return {"suggestions": suggestions}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -2,17 +2,17 @@ import pandas as pd
 import chromadb
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
-import os
+from config import Config
 
 # 1. Configuration
 # Make sure this path is exactly where your CSV is located!
 CSV_FILE_PATH = r"c:\Users\manvi\Downloads\archive\healthcare_dataset.csv"
-DB_PATH = "./chroma_db"
-COLLECTION_NAME = "healthcare_docs"
+DB_PATH = Config.CHROMA_DB_DIR
+COLLECTION_NAME = Config.COLLECTION_NAME
 
 print("Loading Embedding Model...")
 # Using a fast, standard, local embedding model
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+embedding_model = SentenceTransformer(Config.EMBEDDING_MODEL)
 
 def ingest_data():
     if not os.path.exists(CSV_FILE_PATH):

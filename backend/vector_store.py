@@ -1,12 +1,14 @@
 import chromadb
 from sentence_transformers import SentenceTransformer
 
+from config import Config
+
 # Configuration — must match what we used in ingest.py
-DB_PATH = "./chroma_db"
-COLLECTION_NAME = "healthcare_docs"
+DB_PATH = Config.CHROMA_DB_DIR
+COLLECTION_NAME = Config.COLLECTION_NAME
 
 # Load the same embedding model
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+embedding_model = SentenceTransformer(Config.EMBEDDING_MODEL)
 
 # Connect to the ChromaDB we already built
 client = chromadb.PersistentClient(path=DB_PATH)
