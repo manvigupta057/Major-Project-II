@@ -36,13 +36,17 @@ async def login(request: Request):
     redirect_uri = "http://localhost:8000/auth/callback"
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
+from fastapi.responses import RedirectResponse
+
 @router.get("/auth/callback")
 async def auth_callback(request: Request):
     token = await oauth.google.authorize_access_token(request)
     user = token.get('userinfo')
     if user:
-        access_token = create_access_token(data={"sub": user["email"]})
-        return {"access_token": access_token, "token_type": "bearer", "user": user}
+        access_token = create_access_token(data={"sub": user["email"], "name": user.get("name")})
+        # Redirect back to React frontend (localhost:5173) with the token
+        response = RedirectResponse(url=f"http://localhost:5173/?access_token={access_token}")
+        return response
     raise HTTPException(status_code=400, detail="Login failed")
 
 async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(security)):

@@ -36,15 +36,15 @@ def health_check():
     return {"status": "Backend is running!"}
 
 @app.post("/query")
-def query_endpoint(request: QueryRequest, current_user: str = Depends(get_current_user)):
-    """Takes user question, searches dataset, returns AI answer. (Protected)"""
+def query_endpoint(request: QueryRequest):
+    """Takes user question, searches dataset, returns AI answer. (Unlocked for Demo)"""
     context_chunks = search_similar(request.query, top_k=5)
     answer = generate_answer(request.query, context_chunks)
-    return {"query": request.query, "answer": answer, "user": current_user}
+    return {"query": request.query, "answer": answer, "user": "Demo User"}
 
 @app.post("/suggestions")
-def suggestions_endpoint(request: SuggestionRequest, current_user: str = Depends(get_current_user)):
-    """Returns 5 keyword suggestions when user types 3+ words. (Protected)"""
+def suggestions_endpoint(request: SuggestionRequest):
+    """Returns 5 keyword suggestions when user types 3+ words. (Unlocked for Demo)"""
     words = request.text.strip().split()
     if len(words) < 3:
         return {"suggestions": [], "message": "Type at least 3 words"}

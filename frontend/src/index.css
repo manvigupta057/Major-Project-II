@@ -1,7 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 body {
-  @apply bg-[#0a0a0a] text-white antialiased;
+  background-color: #ffffff;
+  color: #1a1a1a;
 }
