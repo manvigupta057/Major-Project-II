@@ -39,17 +39,17 @@ def ingest_data():
         ids.append(f"doc_{index}")
 
     print("Initializing ChromaDB...")
+    # Wipe the database folder recursively to avoid Windows lock/ghost collection issues
+    if os.path.exists(DB_PATH):
+        try:
+            shutil.rmtree(DB_PATH)
+        except Exception as e:
+            print(f"Warning: Could not delete old DB folder: {e}")
+            
     client = chromadb.PersistentClient(path=DB_PATH)
-    
-    # Wipe the old collection to remove previous data (restaurant reviews)
-    try:
-        client.delete_collection(name=COLLECTION_NAME)
-        print("Cleared old ChromaDB collection.")
-    except Exception:
-        pass
-    
-    # Create the collection
-    collection = client.create_collection(name=COLLECTION_NAME)
+
+    # Create the collection fresh (or get it if Windows prevented deletion)
+    collection = client.get_or_create_collection(name=COLLECTION_NAME)
 
     print("Generating Embeddings and Storing Data (This might take a while)...")
     # Generate embeddings in batches to prevent memory crashes
