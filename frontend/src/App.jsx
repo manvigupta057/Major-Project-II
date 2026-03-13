@@ -12,6 +12,7 @@ function App() {
     { role: 'ai', content: 'Hello! I am your healthcare assistant. Ask me any medical questions you have based on your records.' }
   ]);
   const [input, setInput] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
@@ -23,6 +24,26 @@ function App() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Fetch suggestions as the user types
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      const words = input.trim().split(/\s+/);
+      if (words.length >= 3) {
+        try {
+          const response = await axios.post(`${API_BASE}/suggestions`, { text: input });
+          setSuggestions(response.data.suggestions || []);
+        } catch (err) {
+          console.error("Suggestions error:", err);
+        }
+      } else {
+        setSuggestions([]);
+      }
+    };
+
+    const timeoutId = setTimeout(fetchSuggestions, 300);
+    return () => clearTimeout(timeoutId);
+  }, [input]);
 
   // Handle URL token after Google Redirect
   useEffect(() => {
@@ -184,6 +205,21 @@ function App() {
           )}
           <div ref={messagesEndRef} />
         </div>
+
+        {/* Suggestion Chips */}
+        {suggestions.length > 0 && (
+          <div className="absolute bottom-24 left-0 right-0 px-4 flex flex-wrap gap-2 justify-center animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {suggestions.map((s, i) => (
+              <button
+                key={i}
+                onClick={() => setInput(s)}
+                className="bg-white border border-blue-100 text-blue-600 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Input Form at Bottom */}
         <div className="absolute bottom-6 left-0 right-0 px-4 md:px-0">

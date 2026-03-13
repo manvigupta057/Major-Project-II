@@ -16,20 +16,25 @@ def generate_answer(query: str, context_chunks: list[str]) -> str:
     """
     context = "\n\n".join(context_chunks)
 
-    prompt = f"""You are a helpful healthcare assistant.
-Answer the user's question ONLY using the context provided below.
-If the answer is not in the context, say "I don't have enough data to answer this."
+    prompt = f"""You are a professional healthcare data assistant.
+Your task is to answer the user's question based on the provided hospital records.
 
-Context:
+RECORDS:
 {context}
 
-Question: {query}
+USER QUESTION: {query}
+
+INSTRUCTIONS:
+1. If the records contain patient data related to the question, summarize what the records show (e.g., common medications prescribed, typical patient age groups, or test results).
+2. If the user asks for a 'cure' or 'treatment', refer to the medications listed in the records for that condition.
+3. If the records are completely irrelevant to the question, only then say "I don't have enough data in the current hospital records to answer this."
+
 Answer:"""
 
     response = client.chat.completions.create(
         model=MODEL,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.2
+        temperature=0.3
     )
 
     return response.choices[0].message.content
