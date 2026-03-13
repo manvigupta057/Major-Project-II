@@ -1,13 +1,13 @@
 import pandas as pd
 import os
+import shutil
 import chromadb
+import kagglehub
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 from config import Config
 
 # 1. Configuration
-# Make sure this path is exactly where your CSV is located!
-CSV_FILE_PATH = r"c:\Users\manvi\Downloads\archive\healthcare_dataset.csv"
 DB_PATH = Config.CHROMA_DB_DIR
 COLLECTION_NAME = Config.COLLECTION_NAME
 
@@ -16,15 +16,18 @@ print("Loading Embedding Model...")
 embedding_model = SentenceTransformer(Config.EMBEDDING_MODEL)
 
 def ingest_data():
-    if not os.path.exists(CSV_FILE_PATH):
-        print(f"Error: Could not find dataset at {CSV_FILE_PATH}")
+    print("Downloading Healthcare Dataset via kagglehub...")
+    path = kagglehub.dataset_download("prasad22/healthcare-dataset")
+    csv_file_path = os.path.join(path, "healthcare_dataset.csv")
+
+    if not os.path.exists(csv_file_path):
+        print(f"Error: Could not find dataset at {csv_file_path}")
         return
 
-    print("Reading CSV Data...")
-    df = pd.read_csv(CSV_FILE_PATH)
+    print(f"Reading CSV Data from {csv_file_path}...")
+    df = pd.read_csv(csv_file_path)
     
-    # Optional: If the dataset is huge, you might want to process a subset first for testing
-    # df = df.head(1000) 
+    # df = df.head(1000) # Optional: uncomment to process a subset for quick testing
 
     documents = []
     metadata = []
@@ -42,8 +45,15 @@ def ingest_data():
     print("Initializing ChromaDB...")
     client = chromadb.PersistentClient(path=DB_PATH)
     
-    # Create or get the collection
-    collection = client.get_or_create_collection(name=COLLECTION_NAME)
+    # Wipe the old collection to remove previous data (restaurant reviews)
+    try:
+        client.delete_collection(name=COLLECTION_NAME)
+        print("Cleared old ChromaDB collection.")
+    except Exception:
+        pass
+    
+    # Create the collection
+    collection = client.create_collection(name=COLLECTION_NAME)
 
     print("Generating Embeddings and Storing Data (This might take a while)...")
     # Generate embeddings in batches to prevent memory crashes
