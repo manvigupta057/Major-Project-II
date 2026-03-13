@@ -212,7 +212,19 @@ function App() {
             {suggestions.map((s, i) => (
               <button
                 key={i}
-                onClick={() => setInput(s)}
+                onClick={() => {
+                  const currentInput = input.trim().toLowerCase();
+                  const suggestion = s.toLowerCase();
+                  
+                  // If suggestion starts with what the user already typed, use the suggestion as the whole text
+                  // Otherwise, append it normally.
+                  if (suggestion.startsWith(currentInput)) {
+                    setInput(s);
+                  } else {
+                    setInput(prev => `${prev.trim()} ${s}`.trim());
+                  }
+                  setSuggestions([]); // Clear suggestions after selection
+                }}
                 className="bg-white border border-blue-100 text-blue-600 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
               >
                 {s}
