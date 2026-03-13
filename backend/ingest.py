@@ -2,12 +2,12 @@ import pandas as pd
 import os
 import shutil
 import chromadb
-import kagglehub
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 from config import Config
 
 # 1. Configuration
+CSV_FILE_PATH = r"c:\Users\manvi\Downloads\archive\healthcare_dataset.csv"
 DB_PATH = Config.CHROMA_DB_DIR
 COLLECTION_NAME = Config.COLLECTION_NAME
 
@@ -16,16 +16,12 @@ print("Loading Embedding Model...")
 embedding_model = SentenceTransformer(Config.EMBEDDING_MODEL)
 
 def ingest_data():
-    print("Downloading Healthcare Dataset via kagglehub...")
-    path = kagglehub.dataset_download("prasad22/healthcare-dataset")
-    csv_file_path = os.path.join(path, "healthcare_dataset.csv")
-
-    if not os.path.exists(csv_file_path):
-        print(f"Error: Could not find dataset at {csv_file_path}")
+    if not os.path.exists(CSV_FILE_PATH):
+        print(f"Error: Could not find dataset at {CSV_FILE_PATH}")
         return
 
-    print(f"Reading CSV Data from {csv_file_path}...")
-    df = pd.read_csv(csv_file_path)
+    print(f"Reading CSV Data from {CSV_FILE_PATH}...")
+    df = pd.read_csv(CSV_FILE_PATH)
     
     # df = df.head(1000) # Optional: uncomment to process a subset for quick testing
 
