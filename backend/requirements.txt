@@ -47,6 +47,7 @@ greenlet==3.3.2
 groq==0.37.1
 grpcio==1.76.0
 h11==0.16.0
+hf-xet==1.2.0
 httpcore==1.0.9
 httptools==0.7.1
 httpx==0.28.1
@@ -181,6 +182,7 @@ tornado==6.5.4
 tqdm==4.67.1
 transformers==4.57.5
 typer==0.21.1
+typer-slim==0.21.1
 typing-inspect==0.9.0
 typing-inspection==0.4.2
 typing_extensions==4.15.0
