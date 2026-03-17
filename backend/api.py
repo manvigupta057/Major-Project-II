@@ -5,7 +5,8 @@ from pydantic import BaseModel
 import os
 
 from vector_store import search_similar
-from llm_interface import generate_answer, generate_suggestions
+from llm_interface import generate_answer, generate_suggestions, route_query
+from pandas_engine import execute_data_query
 from auth import router as auth_router, get_current_user
 
 app = FastAPI(title="Healthcare Chatbot API")
@@ -37,14 +38,25 @@ def health_check():
 
 @app.post("/query")
 def query_endpoint(request: QueryRequest):
-    """Takes user question, searches dataset, returns AI answer. (Unlocked for Demo)"""
-    context_chunks = search_similar(request.query, top_k=5)
-    answer = generate_answer(request.query, context_chunks)
-    return {"query": request.query, "answer": answer, "user": "Demo User"}
+    """Takes user question, routes to either Pandas (Data) or RAG (Semantic)."""
+    category = route_query(request.query)
+    
+    if category == "DATA":
+        answer = execute_data_query(request.query)
+    else:
+        context_chunks = search_similar(request.query, top_k=5)
+        answer = generate_answer(request.query, context_chunks)
+        
+    return {
+        "query": request.query, 
+        "answer": answer, 
+        "category": category,
+        "user": "Demo User"
+    }
 
 @app.post("/suggestions")
 def suggestions_endpoint(request: SuggestionRequest):
-    """Returns 5 keyword suggestions when user types 3+ words. (Unlocked for Demo)"""
+    """Returns 5 keyword suggestions when user types 3+ words."""
     words = request.text.strip().split()
     if len(words) < 3:
         return {"suggestions": [], "message": "Type at least 3 words"}

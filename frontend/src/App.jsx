@@ -6,7 +6,7 @@ const API_BASE = 'http://localhost:8000';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
-  
+
   // Chat States
   const [messages, setMessages] = useState([
     { role: 'ai', content: 'Hello! I am your healthcare assistant. Ask me any medical questions you have based on your records.' }
@@ -20,7 +20,7 @@ function App() {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-  
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -31,7 +31,10 @@ function App() {
       const words = input.trim().split(/\s+/);
       if (words.length >= 3) {
         try {
-          const response = await axios.post(`${API_BASE}/suggestions`, { text: input });
+          const response = await axios.post(`${API_BASE}/suggestions`, 
+            { text: input },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
           setSuggestions(response.data.suggestions || []);
         } catch (err) {
           console.error("Suggestions error:", err);
@@ -71,11 +74,11 @@ function App() {
     setIsLoading(true);
 
     try {
-      // NOTE: Using demo mode endpoint without Bearer token to match backend
-      const response = await axios.post(`${API_BASE}/query`, {
-        query: userMessage
-      });
-      
+      const response = await axios.post(`${API_BASE}/query`, 
+        { query: userMessage },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
       setMessages(prev => [...prev, { role: 'ai', content: response.data.answer }]);
     } catch (error) {
       console.error("Error fetching AI response:", error);
@@ -94,7 +97,7 @@ function App() {
             <h1 className="text-5xl font-black tracking-tighter text-blue-600 italic underline decoration-blue-600 underline-offset-8 uppercase">healthcare.ai</h1>
             <p className="text-slate-500 text-sm tracking-widest uppercase font-medium">Healthcare RAG</p>
           </div>
-          <button 
+          <button
             onClick={() => window.location.href = `${API_BASE}/auth/login`}
             className="w-full py-5 bg-blue-600 text-white font-bold rounded-2xl flex items-center justify-center gap-4 hover:bg-blue-700 transition-all transform hover:scale-[1.02] active:scale-95 duration-200 shadow-xl"
           >
@@ -116,7 +119,7 @@ function App() {
       if (!name || name === 'User' || name.toLowerCase() === name) {
         const rawName = (name && name !== 'User') ? name : email.split('@')[0];
         const cleanName = rawName.replace(/[0-9._-]/g, ' ').trim();
-        name = cleanName.split(/\s+/).map(word => 
+        name = cleanName.split(/\s+/).map(word =>
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ');
       }
@@ -131,40 +134,40 @@ function App() {
 
   return (
     <div className="h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
-      
+
       {/* Navbar */}
       <div className="w-full bg-white px-8 py-4 border-b border-slate-200 flex justify-between items-center shadow-sm z-10 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-3 h-3 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
           <h2 className="text-2xl font-black italic tracking-tighter text-blue-600">healthcare.ai</h2>
         </div>
-        
-        <div className="flex items-center gap-6">
-            {/* User Profile Micro-Display */}
-            <div className="flex items-center gap-3 hidden md:flex">
-                <div className="text-right">
-                    <p className="text-sm font-bold text-slate-900 leading-tight">{user.name}</p>
-                    <p className="text-xs text-slate-500">{user.email}</p>
-                </div>
-                <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center border border-slate-200">
-                    <User size={20} className="text-slate-400" />
-                </div>
-            </div>
 
-            <button onClick={logout} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600" title="Logout">
-                <LogOut size={20} />
-            </button>
+        <div className="flex items-center gap-6">
+          {/* User Profile Micro-Display */}
+          <div className="flex items-center gap-3 hidden md:flex">
+            <div className="text-right">
+              <p className="text-sm font-bold text-slate-900 leading-tight">{user.name}</p>
+              <p className="text-xs text-slate-500">{user.email}</p>
+            </div>
+            <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center border border-slate-200">
+              <User size={20} className="text-slate-400" />
+            </div>
+          </div>
+
+          <button onClick={logout} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600" title="Logout">
+            <LogOut size={20} />
+          </button>
         </div>
       </div>
 
       {/* Main Chat Area */}
       <div className="flex-1 max-w-4xl w-full mx-auto p-4 flex flex-col gap-4 overflow-hidden relative">
-        
+
         {/* Messages List */}
         <div className="flex-1 overflow-y-auto space-y-6 px-2 pb-32 pt-8 scrollbar-hide">
           {messages.map((msg, idx) => (
             <div key={idx} className={`flex items-start gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              
+
               {/* AI Avatar */}
               {msg.role === 'ai' && (
                 <div className="w-10 h-10 rounded-2xl bg-blue-600 flex justify-center items-center shrink-0 shadow-lg mt-1">
@@ -173,12 +176,11 @@ function App() {
               )}
 
               {/* Message Bubble */}
-              <div 
-                className={`max-w-[80%] rounded-[2rem] px-6 py-4 shadow-sm text-sm leading-relaxed ${
-                  msg.role === 'user' 
-                    ? 'bg-blue-600 text-white rounded-tr-sm' 
+              <div
+                className={`max-w-[80%] rounded-[2rem] px-6 py-4 shadow-sm text-sm leading-relaxed ${msg.role === 'user'
+                    ? 'bg-blue-600 text-white rounded-tr-sm'
                     : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'
-                }`}
+                  }`}
               >
                 {msg.content}
               </div>
@@ -191,17 +193,17 @@ function App() {
               )}
             </div>
           ))}
-          
+
           {/* Loading Indicator */}
           {isLoading && (
-             <div className="flex items-start gap-4 justify-start">
-               <div className="w-10 h-10 rounded-2xl bg-blue-600 flex justify-center items-center shrink-0 shadow-lg mt-1">
-                  <Loader2 size={22} className="text-white animate-spin" />
-               </div>
-               <div className="bg-white border border-slate-200 text-slate-400 rounded-[2rem] rounded-tl-sm px-6 py-4 text-sm flex items-center gap-2">
-                 Analyzing healthcare records...
-               </div>
-             </div>
+            <div className="flex items-start gap-4 justify-start">
+              <div className="w-10 h-10 rounded-2xl bg-blue-600 flex justify-center items-center shrink-0 shadow-lg mt-1">
+                <Loader2 size={22} className="text-white animate-spin" />
+              </div>
+              <div className="bg-white border border-slate-200 text-slate-400 rounded-[2rem] rounded-tl-sm px-6 py-4 text-sm flex items-center gap-2">
+                Analyzing healthcare records...
+              </div>
+            </div>
           )}
           <div ref={messagesEndRef} />
         </div>
@@ -215,7 +217,7 @@ function App() {
                 onClick={() => {
                   const currentInput = input.trim().toLowerCase();
                   const suggestion = s.toLowerCase();
-                  
+
                   // If suggestion starts with what the user already typed, use the suggestion as the whole text
                   // Otherwise, append it normally.
                   if (suggestion.startsWith(currentInput)) {
@@ -235,27 +237,27 @@ function App() {
 
         {/* Input Form at Bottom */}
         <div className="absolute bottom-6 left-0 right-0 px-4 md:px-0">
-            <form 
-              onSubmit={handleSendMessage}
-              className="bg-white border border-slate-200 p-2 rounded-[2rem] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.05)] flex items-center gap-2"
+          <form
+            onSubmit={handleSendMessage}
+            className="bg-white border border-slate-200 p-2 rounded-[2rem] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.05)] flex items-center gap-2"
+          >
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask about symptoms, treatments, or healthcare data..."
+              className="flex-1 bg-transparent px-6 py-3 outline-none text-slate-700 placeholder:text-slate-400 text-sm"
+              disabled={isLoading}
+            />
+            <button
+              type="submit"
+              disabled={!input.trim() || isLoading}
+              className="bg-blue-600 text-white p-3 md:px-6 rounded-full font-bold text-sm tracking-wide disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex items-center gap-2"
             >
-              <input 
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about symptoms, treatments, or healthcare data..."
-                className="flex-1 bg-transparent px-6 py-3 outline-none text-slate-700 placeholder:text-slate-400 text-sm"
-                disabled={isLoading}
-              />
-              <button 
-                type="submit"
-                disabled={!input.trim() || isLoading}
-                className="bg-blue-600 text-white p-3 md:px-6 rounded-full font-bold text-sm tracking-wide disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex items-center gap-2"
-              >
-                <span className="hidden md:inline">Send</span>
-                <Send size={18} />
-              </button>
-            </form>
+              <span className="hidden md:inline">Send</span>
+              <Send size={18} />
+            </button>
+          </form>
         </div>
 
       </div>

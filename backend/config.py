@@ -1,4 +1,5 @@
 class Config:
+    CSV_PATH = r"c:\Users\manvi\Downloads\medical_dataset_10000_unique_patients.csv"
     EMBEDDING_MODEL = "all-MiniLM-L6-v2"
     CHROMA_DB_DIR = "./chroma_db"
     COLLECTION_NAME = "healthcare_docs"

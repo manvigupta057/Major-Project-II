@@ -7,7 +7,7 @@ from sentence_transformers import SentenceTransformer
 from config import Config
 
 # 1. Configuration
-CSV_FILE_PATH = r"c:\Users\manvi\Downloads\archive\healthcare_dataset.csv"
+CSV_FILE_PATH = Config.CSV_PATH
 DB_PATH = Config.CHROMA_DB_DIR
 COLLECTION_NAME = Config.COLLECTION_NAME
 
