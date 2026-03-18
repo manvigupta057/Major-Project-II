@@ -15,6 +15,10 @@ def route_query(query: str) -> str:
     """
     query_lower = query.lower()
     
+    # Interactive Check (Yes/No buttons)
+    if "yes, i am experiencing" in query_lower or "no, i don't have" in query_lower:
+        return "INTERACTIVE"
+
     # Improved Rule-based detection
     data_keywords = [
         "how many", "count", "average", "most", "highest", 
