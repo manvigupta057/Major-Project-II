@@ -18,16 +18,18 @@ def generate_answer(query: str, context_chunks: list[str]) -> dict:
     import json
     context = "\n\n".join(context_chunks)
 
-    prompt = f"""You are an Expert Medical Doctor and Data Analyst. Use the provided hospital records to assist the user.
+    prompt = f"""You are an Expert Medical Doctor and Data Analyst. Use the provided context to assist the user.
     
+    IMPORTANT: Do NOT start your answer with phrases like "Based on the hospital records" or "According to the context". Provide your answer directly and professionally.
+
     TASK:
     1. Answer the user's question accurately based ONLY on the context.
-    2. Identify the primary disease discussed.
+    2. Identify the primary disease name from the user's query. ALWAYS use the EXACT same terminology or phrasing the user used in their question (e.g., if they ask about 'bp', use 'Blood Pressure' or 'BP' in your response and follow-up, NOT 'Hypertension'). This applies universally to all conditions (Diabetes, Fever, etc.).
     3. Propose ONE short, friendly follow-up question to check the user's symptoms related to that disease.
     
     RESPONSE FORMAT (Strict JSON):
     {{
-        "answer": "Your detailed answer here...",
+        "answer": "Direct medical answer here...",
         "disease": "Primary disease name",
         "follow_up": "Your single symptom-check question here"
     }}

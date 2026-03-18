@@ -65,21 +65,45 @@ async def query_endpoint(request: QueryRequest):
             answer = f"Error performing calculation: {str(e)}"
         answer = ensure_string(answer)
         new_state = "IDLE" # Data queries are usually one-off
-    elif category == "INTERACTIVE" or state == "SYMPTOM_CHECK":
-        if "yes" in query.lower() or "no" in query.lower():
+    elif state == "SYMPTOM_CHECK":
+        if "yes" in query.lower():
             disease_name = query.split("for")[-1].strip().replace(".", "")
             if not disease_name: disease_name = "your condition"
             
-            base_answer = f"I understand. It's important to monitor those symptoms closely." if "yes" in query.lower() else "I'm glad to hear that you aren't experiencing those specific symptoms."
-            answer = f"{base_answer} You can now ask anything further about your records or other conditions here."
-            
-            # Reset to IDLE so the user can type a fresh question without buttons
-            follow_up = None
-            new_state = "IDLE"
+            answer = "I understand. It's important to monitor those symptoms closely."
+            follow_up = {
+                "disease": disease_name,
+                "question": f"Would you like to know about the remedies for {disease_name} or would you like to know how can you control these symptoms?"
+            }
+            new_state = "REMEDY_ASK"
         else:
             answer = "I understand. Is there anything else you would like to know about your medical records or other conditions?"
             new_state = "IDLE"
+        answer = ensure_string(answer)
         
+    elif state == "REMEDY_ASK":
+        if "yes" in query.lower():
+            disease_name = query.split("for")[-1].strip().replace(".", "")
+            if not disease_name: disease_name = "your condition"
+            
+            # Perform RAG for remedies, cures, and medications
+            search_query = f"Remedies, cures, and medications for {disease_name}"
+            context = search_similar(search_query, top_k=4)
+            llm_res = generate_answer(f"Provide a combination of remedies, cure, and medication for {disease_name} based on the records.", context)
+            
+            remedy_text = ensure_string(llm_res.get("answer"))
+            answer = f"{remedy_text}\n\nYou can now ask anything further about your records or other conditions here."
+            follow_up = None
+            new_state = "IDLE"
+        else:
+            answer = "I understand. Please let me know if you have any other questions."
+            new_state = "IDLE"
+        answer = ensure_string(answer)
+
+    elif category == "INTERACTIVE":
+        # Handled by states above, but as a fallback:
+        answer = "I'm here to help. Could you please provide more details or ask a question?"
+        new_state = "IDLE"
         answer = ensure_string(answer)
     else:
         # SEMANTIC Routing (Default / Initial Question)

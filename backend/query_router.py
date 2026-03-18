@@ -19,6 +19,14 @@ def route_query(query: str) -> str:
     if "yes, i am experiencing" in query_lower or "no, i don't have" in query_lower:
         return "INTERACTIVE"
 
+    # Strict Semantic Overrides (Medical questions often start with 'What', 'How', 'Who')
+    semantic_prefixes = [
+        "what is", "what are", "how to", "who is", "describe", 
+        "explain", "symptoms of", "treatment for", "remedies for"
+    ]
+    if any(query_lower.startswith(prefix) for prefix in semantic_prefixes):
+        return "SEMANTIC"
+
     # Improved Rule-based detection
     data_keywords = [
         "how many", "count", "average", "most", "highest", 
@@ -27,7 +35,10 @@ def route_query(query: str) -> str:
     ]
     
     if any(keyword in query_lower for keyword in data_keywords):
-        return "DATA"
+        # Double check: if it has data keywords but also "what is", it's likely semantic
+        # e.g. "What is the most common symptom?" -> still SEMANTIC for RAG
+        if not any(prefix in query_lower for prefix in semantic_prefixes):
+            return "DATA"
 
     # LLM Refinement for ambiguous queries
     prompt = f"""Analyze this healthcare query: "{query}"
