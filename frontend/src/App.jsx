@@ -120,23 +120,42 @@ function App() {
 
     setShowUpload(false);
     setIsLoading(true);
+    // Only show a clean upload confirmation, NOT the raw OCR text
     setMessages(prev => [...prev, { role: 'user', content: `📎 Uploaded: ${file.name}` }]);
 
     try {
       const formData = new FormData();
       formData.append('file', file);
 
+      // Step 1: Extract text using OCR
       const response = await axios.post(`${API_BASE}/upload-receipt`, formData, {
         headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` }
       });
 
       const text = response.data.extracted_text;
-      setMessages(prev => [...prev, {
-        role: 'ai',
-        content: text
-          ? `I found the following on your receipt: "${text}". You can ask me anything further about your records.`
-          : 'I could not read the receipt clearly. Please try uploading a clearer image.'
-      }]);
+
+      if (!text) {
+        setMessages(prev => [...prev, { role: 'ai', content: 'I could not read the receipt clearly. Please try uploading a clearer image.' }]);
+        return;
+      }
+
+      // Step 2: Save extracted text to backend cache
+      await axios.post(`${API_BASE}/save-receipt`, { text }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Step 3: Call /query DIRECTLY with RECEIPT_READ state (fixes React async state bug)
+      const queryResponse = await axios.post(`${API_BASE}/query`, {
+        query: "I have uploaded my receipt.",
+        conversation_state: "RECEIPT_READ"   // Pass state directly, don't rely on React state
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      const { answer, follow_up, new_state } = queryResponse.data;
+
+      setMessages(prev => [...prev, { role: 'ai', content: answer, follow_up }]);
+      setConversationState(new_state);
+      if (answer && answer.toLowerCase().includes('upload')) setShowUpload(true);
+
     } catch (error) {
       setMessages(prev => [...prev, { role: 'ai', content: 'Sorry, there was an error processing your receipt.' }]);
     } finally {
@@ -251,7 +270,11 @@ function App() {
                           onClick={() => {
                             const question = msg.follow_up.question.toLowerCase();
                             let yesMsg = '';
-                            if (question.includes('medication')) {
+                            if (question.includes('schedule') || question.includes('medicines')) {
+                              yesMsg = `Yes, I am taking my medicines as per the prescribed schedule.`;
+                            } else if (question.includes('feeling') || question.includes('better')) {
+                              yesMsg = `Yes, I am feeling better with the current treatment.`;
+                            } else if (question.includes('medication')) {
                               yesMsg = `Yes, I am taking medications for ${msg.follow_up.disease}.`;
                             } else if (question.includes('remedies') || question.includes('control')) {
                               yesMsg = `Yes, I would like to know about the remedies for ${msg.follow_up.disease}.`;
@@ -268,7 +291,11 @@ function App() {
                           onClick={() => {
                             const question = msg.follow_up.question.toLowerCase();
                             let noMsg = '';
-                            if (question.includes('medication')) {
+                            if (question.includes('schedule') || question.includes('medicines')) {
+                              noMsg = `No, I am not taking my medicines as per the prescribed schedule.`;
+                            } else if (question.includes('feeling') || question.includes('better')) {
+                              noMsg = `No, I am not feeling better yet with the current treatment.`;
+                            } else if (question.includes('medication')) {
                               noMsg = `No, I am not taking any medications for ${msg.follow_up.disease}.`;
                             } else if (question.includes('remedies') || question.includes('control')) {
                               noMsg = `No, I don't need remedies for ${msg.follow_up.disease}.`;

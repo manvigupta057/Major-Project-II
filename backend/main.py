@@ -15,6 +15,7 @@ from data_engine import data_engine
 app = FastAPI(title="Healthcare Chatbot API (v2)")
 
 reader = easyocr.Reader(['en'])  
+receipt_cache = {}  # Temporary in-memory store: { "session": "extracted receipt text" }
 
 @app.post("/upload-receipt")
 async def upload_receipt(file: UploadFile = File(...)):
@@ -27,6 +28,12 @@ async def upload_receipt(file: UploadFile = File(...)):
     os.remove(temp_path)  
 
     return {"extracted_text": extracted_text}
+
+@app.post("/save-receipt")
+async def save_receipt(data: dict):
+    """Saves extracted receipt text to cache for follow-up questions."""
+    receipt_cache["current"] = data.get("text", "")
+    return {"status": "saved"}
 
 # Middleware
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "fallback-secret"))
@@ -63,7 +70,12 @@ async def query_endpoint(request: QueryRequest):
     follow_up = None 
     new_state = "IDLE"
     
-    if category == "DATA":
+    # PRIORITY: If we are in an active conversation state, handle it immediately
+    # (prevents receipt text or Yes/No from being misrouted to the DATA engine)
+    ACTIVE_STATES = {"SYMPTOM_CHECK", "REMEDY_ASK", "MEDICATION_CHECK", 
+                     "RECEIPT_AWAITING", "RECEIPT_READ", "MEDICINE_ADHERENCE_CHECK", "WELLBEING_CHECK"}
+
+    if category == "DATA" and state not in ACTIVE_STATES:
         intent = parse_data_intent(query)
         func_name = intent.get("function")
         params = intent.get("params", {})
@@ -124,12 +136,44 @@ async def query_endpoint(request: QueryRequest):
             # Instruction for uploading receipt
             answer = "I understand. Please upload your recent medication receipt here (as an image) so I can verify them for you based on your records."
             follow_up = None
-            new_state = "IDLE"
+            new_state = "RECEIPT_AWAITING"   # Wait for upload, then chain begins
         else:
             # Standard closing if no medications
             answer = "I understand. You can now ask anything further about your records or other conditions here."
             follow_up = None
             new_state = "IDLE"
+        answer = ensure_string(answer)
+
+    elif state == "RECEIPT_READ":
+        # query contains the OCR text sent from frontend after upload
+        receipt_text = receipt_cache.get("current", query)
+        answer = f"I have read your receipt. It mentions: '{receipt_text[:150]}...'"
+        follow_up = {
+            "disease": "your medication",
+            "question": "According to your receipt, are you taking your medicines as per the prescribed schedule?"
+        }
+        new_state = "MEDICINE_ADHERENCE_CHECK"
+        answer = ensure_string(answer)
+
+    elif state == "MEDICINE_ADHERENCE_CHECK":
+        if "yes" in query.lower():
+            answer = "That's great! Consistency with your medication is very important for a speedy recovery."
+        else:
+            answer = "Please try to follow your prescription schedule closely. Missing doses can slow your recovery. Consider setting reminders on your phone."
+        follow_up = {
+            "disease": "your health",
+            "question": "Are you feeling better or well now with the current treatment?"
+        }
+        new_state = "WELLBEING_CHECK"
+        answer = ensure_string(answer)
+
+    elif state == "WELLBEING_CHECK":
+        if "yes" in query.lower():
+            answer = "I'm really glad to hear that! Keep following your prescription and stay hydrated. You can ask me anything further here."
+        else:
+            answer = "I'm sorry to hear that. Please consult your doctor if your symptoms persist or worsen. You can ask me anything further here."
+        follow_up = None
+        new_state = "IDLE"
         answer = ensure_string(answer)
 
     elif category == "INTERACTIVE":
