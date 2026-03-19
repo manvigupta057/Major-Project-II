@@ -23,3 +23,7 @@ pypdf
 python-pptx
 python-docx
 openpyxl
+
+
+easyocr
+python-multipart

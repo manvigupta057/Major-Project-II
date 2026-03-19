@@ -2,7 +2,9 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel
-import os
+import shutil, os
+import easyocr
+from fastapi import UploadFile, File
 
 from vector_store import search_similar
 from llm_interface import generate_answer, generate_suggestions
@@ -11,6 +13,20 @@ from query_router import route_query, parse_data_intent
 from data_engine import data_engine
 
 app = FastAPI(title="Healthcare Chatbot API (v2)")
+
+reader = easyocr.Reader(['en'])  
+
+@app.post("/upload-receipt")
+async def upload_receipt(file: UploadFile = File(...)):
+    # Save the uploaded file to a temporary location
+    temp_path = f"temp_{file.filename}"
+    with open(temp_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    results = reader.readtext(temp_path, detail=0)
+    extracted_text = " ".join(results)   # Fixed: was 'result', should be 'results'
+    os.remove(temp_path)  
+
+    return {"extracted_text": extracted_text}
 
 # Middleware
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "fallback-secret"))
@@ -92,11 +108,27 @@ async def query_endpoint(request: QueryRequest):
             llm_res = generate_answer(f"Provide a combination of remedies, cure, and medication for {disease_name} based on the records.", context)
             
             remedy_text = ensure_string(llm_res.get("answer"))
-            answer = f"{remedy_text}\n\nYou can now ask anything further about your records or other conditions here."
+            answer = f"{remedy_text}"  # Just the remedy text
+            follow_up = {
+                "disease": disease_name,
+                "question": "Are you taking any recent medications for this condition?"
+                }
+            new_state = "MEDICATION_CHECK"
+        else:
+            answer = "I understand. Please let me know if you have any other questions."
+            new_state = "IDLE"
+        answer = ensure_string(answer)
+
+    elif state == "MEDICATION_CHECK":
+        if "yes" in query.lower():
+            # Instruction for uploading receipt
+            answer = "I understand. Please upload your recent medication receipt here (as an image) so I can verify them for you based on your records."
             follow_up = None
             new_state = "IDLE"
         else:
-            answer = "I understand. Please let me know if you have any other questions."
+            # Standard closing if no medications
+            answer = "I understand. You can now ask anything further about your records or other conditions here."
+            follow_up = None
             new_state = "IDLE"
         answer = ensure_string(answer)
 
