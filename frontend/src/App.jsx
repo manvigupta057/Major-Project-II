@@ -14,6 +14,8 @@ function App() {
   const [input, setInput] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationState, setConversationState] = useState('IDLE');
+  const [showUpload, setShowUpload] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Auto-scroll chat to bottom
@@ -64,25 +66,79 @@ function App() {
     setToken(null);
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  const handleSendMessage = async (e, messageOverride = null) => {
+    if (e) e.preventDefault();
+    
+    const messageText = messageOverride || input;
+    if (!messageText.trim()) return;
 
-    const userMessage = input.trim();
-    setInput('');
+    const userMessage = messageText.trim();
+    if (!messageOverride) setInput('');
+    
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
     try {
       const response = await axios.post(`${API_BASE}/query`, 
-        { query: userMessage },
+        { 
+          query: userMessage,
+          conversation_state: conversationState 
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setMessages(prev => [...prev, { role: 'ai', content: response.data.answer }]);
+      const { answer, follow_up, new_state } = response.data;
+
+      setMessages(prev => [...prev, { 
+        role: 'ai', 
+        content: answer,
+        follow_up: follow_up 
+      }]);
+
+      if (new_state) {
+        setConversationState(new_state);
+      }
+
+      // Show upload button if bot asks for receipt
+      if (answer && answer.toLowerCase().includes('upload')) {
+        setShowUpload(true);
+      } else {
+        setShowUpload(false);
+      }
     } catch (error) {
       console.error("Error fetching AI response:", error);
       setMessages(prev => [...prev, { role: 'ai', content: 'Sorry, I encountered an error connecting to the server.' }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle receipt image upload and OCR
+  const handleReceiptUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setShowUpload(false);
+    setIsLoading(true);
+    setMessages(prev => [...prev, { role: 'user', content: `📎 Uploaded: ${file.name}` }]);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await axios.post(`${API_BASE}/upload-receipt`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` }
+      });
+
+      const text = response.data.extracted_text;
+      setMessages(prev => [...prev, {
+        role: 'ai',
+        content: text
+          ? `I found the following on your receipt: "${text}". You can ask me anything further about your records.`
+          : 'I could not read the receipt clearly. Please try uploading a clearer image.'
+      }]);
+    } catch (error) {
+      setMessages(prev => [...prev, { role: 'ai', content: 'Sorry, there was an error processing your receipt.' }]);
     } finally {
       setIsLoading(false);
     }
@@ -182,7 +238,53 @@ function App() {
                     : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'
                   }`}
               >
-                {msg.content}
+                <div className="space-y-3">
+                  <p>{msg.content}</p>
+                  {msg.follow_up && msg.follow_up.question && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
+                      <p className="font-bold text-blue-600 flex items-center gap-2">
+                        <CheckCircle size={14} />
+                        {msg.follow_up.question}
+                      </p>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => {
+                            const question = msg.follow_up.question.toLowerCase();
+                            let yesMsg = '';
+                            if (question.includes('medication')) {
+                              yesMsg = `Yes, I am taking medications for ${msg.follow_up.disease}.`;
+                            } else if (question.includes('remedies') || question.includes('control')) {
+                              yesMsg = `Yes, I would like to know about the remedies for ${msg.follow_up.disease}.`;
+                            } else {
+                              yesMsg = `Yes, I am experiencing these symptoms for ${msg.follow_up.disease}.`;
+                            }
+                            handleSendMessage(null, yesMsg);
+                          }}
+                          className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-100 transition-colors"
+                        >
+                          Yes
+                        </button>
+                        <button 
+                          onClick={() => {
+                            const question = msg.follow_up.question.toLowerCase();
+                            let noMsg = '';
+                            if (question.includes('medication')) {
+                              noMsg = `No, I am not taking any medications for ${msg.follow_up.disease}.`;
+                            } else if (question.includes('remedies') || question.includes('control')) {
+                              noMsg = `No, I don't need remedies for ${msg.follow_up.disease}.`;
+                            } else {
+                              noMsg = `No, I don't have these symptoms for ${msg.follow_up.disease}.`;
+                            }
+                            handleSendMessage(null, noMsg);
+                          }}
+                          className="bg-slate-50 text-slate-500 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-100 transition-colors"
+                        >
+                          No
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* User Avatar */}
@@ -202,6 +304,21 @@ function App() {
               </div>
               <div className="bg-white border border-slate-200 text-slate-400 rounded-[2rem] rounded-tl-sm px-6 py-4 text-sm flex items-center gap-2">
                 Analyzing healthcare records...
+              </div>
+            </div>
+          )}
+          {/* Receipt Upload Button - shown after bot requests it */}
+          {showUpload && (
+            <div className="flex items-start gap-4 justify-start">
+              <div className="w-10 h-10 rounded-2xl bg-blue-600 flex justify-center items-center shrink-0 shadow-lg mt-1">
+                <Bot size={22} className="text-white" />
+              </div>
+              <div className="bg-white border border-blue-200 rounded-[2rem] rounded-tl-sm px-6 py-4 shadow-sm">
+                <p className="text-sm text-slate-600 mb-3">Click below to upload your receipt image:</p>
+                <label className="cursor-pointer bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors inline-block">
+                  📎 Upload Receipt
+                  <input type="file" accept="image/*" className="hidden" onChange={handleReceiptUpload} />
+                </label>
               </div>
             </div>
           )}
