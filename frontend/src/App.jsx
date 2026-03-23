@@ -166,19 +166,105 @@ function App() {
   // Login View
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] p-6 font-sans">
-        <div className="max-w-md w-full bg-[#111] border border-white/10 p-12 rounded-[40px] shadow-2xl text-center space-y-10">
-          <div className="space-y-3">
-            <h1 className="text-5xl font-black tracking-tighter text-blue-600 italic underline decoration-blue-600 underline-offset-8 uppercase">healthcare.ai</h1>
-            <p className="text-slate-500 text-sm tracking-widest uppercase font-medium">Healthcare RAG</p>
+      <div className="auth-container">
+        {/* Header */}
+        <div className="insove-header-wrapper">
+          <header className="insove-header">
+            <div className="flex items-center gap-3">
+              <img src="/assets/logo.png" alt="Insove Logo" className="h-10" />
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold text-slate-800 leading-none">Insove</span>
+              <span className="text-[12px] text-slate-400 font-medium">Medical Healthcare</span>
+              </div>
+            </div>
+            <div className="header-info">
+              <div className="info-item">
+                <span>📍</span>
+                <span>123 Arling, Miola, NY</span>
+              </div>
+              <div className="info-item">
+                <span>📞</span>
+                <span>(+487) 384 9452</span>
+              </div>
+              <button className="book-now-btn">Book Now</button>
+            </div>
+          </header>
+        </div>
+
+        {/* Floating Navbar */}
+        <div className="insove-nav-container">
+          <nav className="insove-nav">
+            <div className="nav-links">
+              <a href="#" className="active">Home</a>
+              <a href="#">Doctors</a>
+              <a href="#">Department</a>
+              <a href="#">Services</a>
+              <a href="#">Blog</a>
+              <a href="#">Contact</a>
+            </div>
+            <div className="nav-search">
+              <span>🔍</span>
+              <span>Search...</span>
+            </div>
+          </nav>
+        </div>
+
+        {/* Hero Section */}
+        <div className="hero-wrapper-bg">
+          <section className="insove-hero">
+            <div className="hero-left">
+              <div className="hero-badge">
+                <span>💙</span>
+                <span>Live Your Life</span>
+              </div>
+              <h1 className="hero-heading">
+                We Care About <br /> Your Health
+              </h1>
+              <p className="hero-subtext">
+                Vitae aliquam vestibulum elit adipiscing massa diam in dignissim. 
+                Risus tellus libero elementum aliquam etiam. Lectus adipiscing 
+                est auctor mi quisque nunc non viverra est.
+              </p>
+              
+              <button
+                onClick={() => window.location.href = `${API_BASE}/auth/login`}
+                className="hero-cta"
+              >
+                SIGN IN WITH GOOGLE
+              </button>
+            </div>
+
+            <div className="hero-right">
+              <div className="doctor-bg-circle"></div>
+              <img 
+                src="/assets/doctor.png" 
+                alt="Doctor" 
+                className="hero-doctor-img" 
+              />
+            </div>
+          </section>
+        </div>
+
+        {/* Stats Section */}
+        <div className="stats-wrapper-bg">
+          <div className="insove-stats">
+            <div className="stat-item">
+              <div className="stat-number">+5120</div>
+              <div className="stat-label">Happy Patients</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">+26</div>
+              <div className="stat-label">Total Branches</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">+53</div>
+              <div className="stat-label">Senior Doctors</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">+10</div>
+              <div className="stat-label">Years Experience</div>
+            </div>
           </div>
-          <button
-            onClick={() => window.location.href = `${API_BASE}/auth/login`}
-            className="w-full py-5 bg-blue-600 text-white font-bold rounded-2xl flex items-center justify-center gap-4 hover:bg-blue-700 transition-all transform hover:scale-[1.02] active:scale-95 duration-200 shadow-xl"
-          >
-            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" className="w-6 h-6 bg-white rounded-full p-0.5" alt="google" />
-            Sign in with Google
-          </button>
         </div>
       </div>
     );
@@ -208,10 +294,11 @@ function App() {
   const user = getUserInfo();
 
   return (
-    <div className="h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
+    <div className="relative min-h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
+      <div className="relative z-10 h-full flex flex-col">
 
-      {/* Navbar */}
-      <div className="w-full bg-white px-8 py-4 border-b border-slate-200 flex justify-between items-center shadow-sm z-10 shrink-0">
+        {/* Navbar */}
+        <div className="w-full bg-white px-8 py-4 border-b border-slate-200 flex justify-between items-center shadow-sm z-10 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-3 h-3 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
           <h2 className="text-2xl font-black italic tracking-tighter text-blue-600">healthcare.ai</h2>
@@ -406,6 +493,7 @@ function App() {
 
       </div>
     </div>
+  </div>
   );
 }
 
