@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { User, LogOut, CheckCircle, Send, Bot, UserRound, Loader2, Search, MapPin, Stethoscope, Syringe, Pill, Scissors, Phone, Map, Facebook, Twitter, Youtube, Github, ChevronRight, Video, ClipboardList } from 'lucide-react';
+import { User, LogOut, CheckCircle, Send, Bot, UserRound, Loader2 } from 'lucide-react';
 
 const API_BASE = 'http://localhost:8000';
 
@@ -167,206 +167,105 @@ function App() {
   if (!token) {
     return (
       <div className="auth-container">
-        {/* Practo-Style Tiered Navbar */}
-        <div className="practo-nav-wrapper">
-          <div className="nav-top-bar">
-            <span>For Corporates <span className="badge-new">NEW</span></span>
-            <span>For Providers</span>
-            <span>Security & help</span>
-          </div>
-          <div className="nav-main-bar">
-            <div className="nav-left-group">
-              <div className="nav-logo" onClick={() => window.location.reload()}>
-                <img src="/assets/logo.png" alt="Insove" className="h-8" />
-                <span>Insove</span>
-              </div>
-              <div className="nav-links-main">
-                <span>Find Doctors</span>
-                <span>Video Consult</span>
-                <span>Medicines</span>
-                <span>Lab Tests</span>
-                <span>Surgeries</span>
+        {/* Header */}
+        <div className="insove-header-wrapper">
+          <header className="insove-header">
+            <div className="flex items-center gap-3">
+              <img src="/assets/logo.png" alt="Insove Logo" className="h-10" />
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold text-slate-800 leading-none">Insove</span>
+              <span className="text-[12px] text-slate-400 font-medium">Medical Healthcare</span>
               </div>
             </div>
-            <div className="nav-right-group">
-              <div className="login-btn-practo" onClick={() => window.location.href = `${API_BASE}/auth/login`}>
-                Login / Signup
+            <div className="header-info">
+              <div className="info-item">
+                <span>📍</span>
+                <span>123 Arling, Miola, NY</span>
               </div>
+              <div className="info-item">
+                <span>📞</span>
+                <span>(+487) 384 9452</span>
+              </div>
+              <button className="book-now-btn">Book Now</button>
+            </div>
+          </header>
+        </div>
+
+        {/* Floating Navbar */}
+        <div className="insove-nav-container">
+          <nav className="insove-nav">
+            <div className="nav-links">
+              <a href="#" className="active">Home</a>
+              <a href="#">Doctors</a>
+              <a href="#">Department</a>
+              <a href="#">Services</a>
+              <a href="#">Blog</a>
+              <a href="#">Contact</a>
+            </div>
+            <div className="nav-search">
+              <span>🔍</span>
+              <span>Search...</span>
+            </div>
+          </nav>
+        </div>
+
+        {/* Hero Section */}
+        <div className="hero-wrapper-bg">
+          <section className="insove-hero">
+            <div className="hero-left">
+              <div className="hero-badge">
+                <span>💙</span>
+                <span>Live Your Life</span>
+              </div>
+              <h1 className="hero-heading">
+                We Care About <br /> Your Health
+              </h1>
+              <p className="hero-subtext">
+                Vitae aliquam vestibulum elit adipiscing massa diam in dignissim. 
+                Risus tellus libero elementum aliquam etiam. Lectus adipiscing 
+                est auctor mi quisque nunc non viverra est.
+              </p>
+              
+              <button
+                onClick={() => window.location.href = `${API_BASE}/auth/login`}
+                className="hero-cta"
+              >
+                SIGN IN WITH GOOGLE
+              </button>
+            </div>
+
+            <div className="hero-right">
+              <div className="doctor-bg-circle"></div>
+              <img 
+                src="/assets/doctor.png" 
+                alt="Doctor" 
+                className="hero-doctor-img" 
+              />
+            </div>
+          </section>
+        </div>
+
+        {/* Stats Section */}
+        <div className="stats-wrapper-bg">
+          <div className="insove-stats">
+            <div className="stat-item">
+              <div className="stat-number">+5120</div>
+              <div className="stat-label">Happy Patients</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">+26</div>
+              <div className="stat-label">Total Branches</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">+53</div>
+              <div className="stat-label">Senior Doctors</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">+10</div>
+              <div className="stat-label">Years Experience</div>
             </div>
           </div>
         </div>
-
-        {/* Hero Section with Dual Search */}
-        <section className="hero-practo">
-          <div className="search-container-practo">
-            <div className="search-loc">
-              <MapPin size={20} className="text-slate-400" />
-              <input type="text" placeholder="Miola, NY" className="border-none outline-none w-full text-slate-800 font-medium" />
-            </div>
-            <div className="search-query">
-              <Search size={20} className="text-slate-400" />
-              <input type="text" placeholder="Search doctors, clinics, hospitals, etc." 
-                className="border-none outline-none w-full text-slate-800 font-medium" />
-            </div>
-          </div>
-
-          <div className="service-tiles-row">
-            {/* AI Consultation Tile - WORKING */}
-            <div className="service-card" onClick={() => window.location.href = `${API_BASE}/auth/login`}>
-              <div className="card-img-wrapper">
-                <div className="flex flex-col items-center gap-2">
-                  <Bot size={60} className="text-practo-teal" />
-                  <span className="text-xs font-bold text-practo-teal uppercase tracking-widest">Insove AI</span>
-                </div>
-              </div>
-              <div className="card-content">
-                <div className="card-title">Instant AI Consult</div>
-                <div className="card-sub">Connect with Insove AI within 60 secs</div>
-              </div>
-            </div>
-
-            <div className="service-card">
-              <div className="card-img-wrapper">
-                <img src="/assets/doctor.png" alt="Find Doctor" />
-              </div>
-              <div className="card-content">
-                <div className="card-title">Find Doctors Near You</div>
-                <div className="card-sub">Confirmed appointments</div>
-              </div>
-            </div>
-
-            <div className="service-card">
-              <div className="card-img-wrapper">
-                <ClipboardList size={60} className="text-practo-teal opacity-40" />
-              </div>
-              <div className="card-content">
-                <div className="card-title">Lab Tests</div>
-                <div className="card-sub">Sample collection at your home</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Direct Working Action Buttons */}
-          <div className="hero-action-buttons">
-            <button 
-              className="ai-chat-btn"
-              onClick={() => window.location.href = `${API_BASE}/auth/login`}
-            >
-              <Bot size={24} />
-              CHAT WITH AI NOW
-            </button>
-            <button 
-              className="google-login-btn"
-              onClick={() => window.location.href = `${API_BASE}/auth/login`}
-            >
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="h-6" />
-              CONTINUE WITH GOOGLE
-            </button>
-          </div>
-        </section>
-
-        {/* Common Health Concerns Gallery */}
-        <section className="concerns-section">
-          <div className="section-header">
-            <div>
-              <h2>Consult top doctors online for any health concern</h2>
-              <p className="text-slate-500 mt-2">Private online consultations with verified doctors in all specialties with most common diseases like (influenza, migraine, asthma, dengue)</p>
-            </div>
-            <div className="view-all">View All Specialties</div>
-          </div>
-
-          <div className="concerns-grid">
-            <div className="concern-item">
-              <div className="concern-circle">
-                <img src="/assets/influenza.png" alt="Influenza" onError={(e) => e.target.src = "https://cdn-icons-png.flaticon.com/512/2855/2855132.png"} />
-              </div>
-              <div className="concern-label">Influenza (Flu)</div>
-            </div>
-            <div className="concern-item">
-              <div className="concern-circle">
-                <img src="/assets/migraine.png" alt="Migraine" onError={(e) => e.target.src = "https://cdn-icons-png.flaticon.com/512/2966/2966486.png"} />
-              </div>
-              <div className="concern-label">Migraine / Headache</div>
-            </div>
-            <div className="concern-item">
-              <div className="concern-circle">
-                <img src="/assets/asthma.png" alt="Asthma" onError={(e) => e.target.src = "https://cdn-icons-png.flaticon.com/512/3663/3663854.png"} />
-              </div>
-              <div className="concern-label">Asthma / Breathing</div>
-            </div>
-            <div className="concern-item">
-              <div className="concern-circle">
-                <img src="/assets/dengue.png" alt="Dengue" onError={(e) => e.target.src = "https://cdn-icons-png.flaticon.com/512/5661/5661332.png"} />
-              </div>
-              <div className="concern-label">Dengue / Mosquito Fever</div>
-            </div>
-          </div>
-        </section>
-
-        {/* Practo-Style Multi-column Footer */}
-        <footer className="practo-footer-wrapper">
-          <div className="footer-main-grid">
-            <div className="footer-col">
-              <h4>Insove</h4>
-              <ul>
-                <li>About</li>
-                <li>Blog</li>
-                <li>Careers</li>
-                <li>Press</li>
-                <li>Contact Us</li>
-              </ul>
-            </div>
-            <div className="footer-col">
-              <h4>For patients</h4>
-              <ul>
-                <li>Search for doctors</li>
-                <li>Read health articles</li>
-                <li>Order medicines</li>
-                <li>Insove AI Consult</li>
-                <li>Health app</li>
-              </ul>
-            </div>
-            <div className="footer-col">
-              <h4>For doctors</h4>
-              <ul>
-                <li>Insove Profile</li>
-                <li>Insove Consult</li>
-                <li>Insove Health Feed</li>
-              </ul>
-            </div>
-            <div className="footer-col">
-              <h4>For hospitals</h4>
-              <ul>
-                <li>Insta by Insove</li>
-                <li>Qikwell by Insove</li>
-                <li>Insove Profile</li>
-              </ul>
-            </div>
-            <div className="footer-col">
-              <h4>More</h4>
-              <ul>
-                <li>Help</li>
-                <li>Developers</li>
-                <li>Privacy Policy</li>
-                <li>Terms & Conditions</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="footer-bottom">
-            <div className="footer-logo">Insove</div>
-            <div className="footer-socials">
-              <Facebook />
-              <Twitter />
-              <Youtube />
-              <Github />
-            </div>
-            <div className="footer-copy">
-              Copyright © 2026, Insove Medical Healthcare. All rights reserved. <br />
-              Your trusted partner in digital health accessibility and AI-driven medical records.
-            </div>
-          </div>
-        </footer>
       </div>
     );
   }
